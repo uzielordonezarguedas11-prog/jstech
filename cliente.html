@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Tech | Estado de Reparación</title>
+    <meta name="theme-color" content="#0b3a3c">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        @media (max-width: 480px) {
+            .hero { padding: 15px 0 25px !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="hero">
+    <div class="w" style="padding-top: 10px;">
+        <!-- Barra superior limpia -->
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0, 0, 0, 0.25); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); margin-bottom: 16px;">
+            <a class="brand" href="index.html" style="display: flex; align-items: center; gap: 8px; color: #fff; text-decoration: none; font-weight: 800;">
+                <div class="logo" style="width: 34px; height: 34px; min-width: 34px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: linear-gradient(135deg, #34d399, #0f766e); color: #fff; font-weight: 800; font-size: 13px;">JS</div>
+                <span style="font-size: 14px; white-space: nowrap;">JS Tech</span>
+            </a>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <a href="productos.html" style="color: #fff; text-decoration: none; font-weight: 700; background: #0d9488; padding: 6px 12px; border-radius: 6px; font-size: 11px; white-space: nowrap;">🛍️ Tienda</a>
+                <a href="index.html" style="color: #fff; text-decoration: none; font-weight: 700; background: rgba(255, 255, 255, 0.15); padding: 6px 10px; border-radius: 6px; font-size: 11px; white-space: nowrap;">Inicio</a>
+            </div>
+        </div>
+
+        <span class="badge" style="background: rgba(255,255,255,0.15); color: #fff; display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; margin-bottom: 6px;">EXPEDIENTE DE REPARACIÓN</span>
+        <h1 style="font-size: 1.5rem; line-height: 1.2; margin: 0 0 6px 0; color: #fff;">Detalle del dispositivo</h1>
+        <p class="lead" style="font-size: 13px; color: rgba(255,255,255,0.9); margin: 0;">Monitoreo en tiempo real del estado de tu equipo en taller.</p>
+    </div>
+</div>
+
+<div class="w" style="margin-top: 20px; padding-bottom: 40px;">
+    <div id="r">
+        <div class="card" style="text-align: center; padding: 30px;">
+            <p class="mut">Cargando información del equipo...</p>
+        </div>
+    </div>
+</div>
+
+<footer id="contacto">
+    <div class="w">
+        <div class="brand">
+            <div class="logo">JS</div>
+            <span>JS Tech</span>
+        </div>
+        <p style="margin-top: 6px; font-size: 13px;">Teléfono / WhatsApp: +506 8638 9553</p>
+        <p><small>&copy; <span id="yr"></span> JS Tech. Todos los derechos reservados.</small></p>
+    </div>
+</footer>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { initializeFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyBHdtd1YLq8z_cuVgUDx33Z088okq0Sriw",
+        authDomain: "servicio-tecnico-1d91f.firebaseapp.com",
+        projectId: "servicio-tecnico-1d91f",
+        storageBucket: "servicio-tecnico-1d91f.firebasestorage.app",
+        messagingSenderId: "475926146823",
+        appId: "1:475926146823:web:1bd26d301c1ad0d25f5fa2"
+    };
+    const ESTADOS = ["Recibido", "En diagnóstico", "Esperando repuesto", "En reparación", "Listo para entrega", "Entregado"];
+    const app = initializeApp(firebaseConfig);
+    const db = initializeFirestore(app, { experimentalForceLongPolling: true });
+    
+    document.getElementById("yr").textContent = new Date().getFullYear();
+
+    function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+    function fmt(t) {
+        const fecha = Number(t);
+        if (!Number.isFinite(fecha) || fecha <= 0) return "Fecha no disponible";
+        return new Date(fecha).toLocaleString("es-CR", { dateStyle: "medium", timeStyle: "short" });
+    }
+    function BADGE(estado) {
+        const i = ESTADOS.indexOf(estado);
+        return `<span class="badge s${Math.max(0, i)}">${esc(estado || "Sin estado")}</span>`;
+    }
+    function progress(estado) {
+        const i = ESTADOS.indexOf(estado);
+        return `<div class="steps">${ESTADOS.map((s, k) => `<div class="step ${i >= 0 && k <= i ? "d" : ""}"><i></i>${esc(s)}</div>`).join("")}</div>`;
+    }
+    function galeriaCliente(fotos = []) {
+        if (!Array.isArray(fotos) || fotos.length === 0) return '';
+        return `
+            <section style="margin-top: 20px;">
+                <h3>📸 Fotografías de la reparación</h3>
+                <div class="photo-grid">
+                    ${fotos.map(foto => `
+                        <article class="photo-card">
+                            <a href="${esc(foto.url)}" target="_blank" rel="noopener noreferrer">
+                                <img src="${esc(foto.url)}" alt="${esc(foto.categoria || "Foto")}" loading="lazy">
+                            </a>
+                            <strong>${esc(foto.categoria || "Dispositivo")}</strong>
+                        </article>
+                    `).join("")}
+                </div>
+            </section>
+        `;
+    }
+    function detalle(reparacion) {
+        const historial = Array.isArray(reparacion.historial) ? reparacion.historial : [];
+        const historialHTML = historial.length ? historial.slice().reverse().map(h => `<div>${esc(h.estado)} ${h.nota ? `— ${esc(h.nota)}` : ""} <small>${esc(fmt(h.fecha))}</small></div>`).join("") : "<p class='mut'>Sin actualizaciones registradas.</p>";
+        return `
+            <div class="dh">
+                <div>
+                    <div class="mut">${esc(reparacion.tipo || "Dispositivo")}</div>
+                    <h2>${esc(reparacion.modelo || "Equipo registrado")}</h2>
+                </div>
+                ${BADGE(reparacion.estado)}
+            </div>
+            ${progress(reparacion.estado)}
+            <p class="mut"><b>Problema:</b> ${esc(reparacion.problema || "No especificado")} ${reparacion.costo ? `<br><b>Costo:</b> ₡${esc(reparacion.costo)}` : ""}</p>
+            <h3>Historial</h3>
+            <div class="tl">${historialHTML}</div>
+            ${galeriaCliente(reparacion.fotos || [])}
+        `;
+    }
+
+    async function cargarEquipo() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const codigo = (urlParams.get("c") || "").trim().toUpperCase();
+        const rDiv = document.getElementById("r");
+
+        if (!codigo) {
+            rDiv.innerHTML = `<div class="card" style="text-align: center; padding: 25px;"><h3>Código no especificado</h3><p class="mut">El enlace no contiene un código de seguimiento válido.</p><a href="index.html" class="btn" style="margin-top:10px; display:inline-block; text-decoration:none;">Ir al inicio</a></div>`;
+            return;
+        }
+
+        try {
+            const resultado = await getDoc(doc(db, "repairs", codigo));
+            if (!resultado.exists()) {
+                rDiv.innerHTML = `<div class="card" style="text-align: center; padding: 25px;"><h3>Equipo no encontrado</h3><p class="mut">No encontramos ninguna reparación registrada con el código <b>${esc(codigo)}</b>.</p><a href="index.html" class="btn" style="margin-top:10px; display:inline-block; text-decoration:none;">Ir al inicio</a></div>`;
+                return;
+            }
+            rDiv.innerHTML = `<div class="card">${detalle(resultado.data())}</div>`;
+        } catch (error) {
+            console.error(error);
+            rDiv.innerHTML = `<div class="card" style="text-align: center; padding: 25px;"><h3>Error de conexión</h3><p class="mut">No pudimos consultar el estado en este momento. Inténtalo más tarde.</p></div>`;
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", cargarEquipo);
+</script>
+</body>
+</html>
