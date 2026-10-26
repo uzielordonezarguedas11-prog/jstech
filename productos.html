@@ -18,7 +18,6 @@
         }
         .badge-btn.active { background: #0f766e; color: #fff; border-color: #0f766e; }
         .badge-btn.back-btn { background: #f1f5f9; color: #0f1f2e; border-color: #cbd5e1; }
-
         /* Cuadrícula de Productos: 2 columnas en celulares */
         .products-grid {
             display: grid;
@@ -81,13 +80,11 @@
                 </a>
                 <a href="index.html" style="color: #fff; text-decoration: none; font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.15); padding: 6px 10px; border-radius: 6px; white-space: nowrap;">Volver al Inicio</a>
             </div>
-
             <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; margin-bottom: 6px; display: inline-block; font-size: 10px; padding: 3px 8px; border-radius: 4px;">TIENDA Y ACCESORIOS</span>
             <h1 style="font-size: 1.5rem; margin: 0 0 4px 0;">Catálogo de Productos</h1>
             <p style="opacity: 0.85; font-size: 12px; margin: 0;">Explora los repuestos y accesorios disponibles.</p>
         </div>
     </header>
-
     <main class="w" style="margin-top: -20px; padding-bottom: 30px;">
         <section class="card">
             <span class="section-kicker" id="lblCatSeleccionada" style="font-weight: 800; color: #0f9d8a; letter-spacing: 1px; font-size: 10px;">CATEGORÍA: TODAS</span>
@@ -99,14 +96,12 @@
                 <button class="badge-btn active" data-cat="">Cargando categorías...</button>
             </div>
         </section>
-
         <section class="card" style="padding: 10px;">
             <div id="listaProductosCliente" class="products-grid">
                 <p class="mut" style="grid-column: 1 / -1; text-align: center; padding: 20px;">Cargando productos...</p>
             </div>
         </section>
     </main>
-
     <footer>
         <div class="w">
             <div class="brand">
@@ -117,7 +112,6 @@
         </div>
     </footer>
 </div>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { initializeFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -130,24 +124,19 @@
         messagingSenderId: "475926146823",
         appId: "1:475926146823:web:1bd26d301c1ad0d25f5fa2"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = initializeFirestore(app, { experimentalForceLongPolling: true });
-
     let todosLosProductos = [];
     let todasLasCategorias = [];
     let todasLasSubcategorias = [];
     let categoriaSeleccionada = "";
     let subcategoriaSeleccionada = "";
-
     const contenedorFiltros = document.getElementById("contenedorFiltros");
     const listaProductos = document.getElementById("listaProductosCliente");
     const lblCatSeleccionada = document.getElementById("lblCatSeleccionada");
-
     function escapar(v) {
-        return String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+        return String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
-
     onSnapshot(collection(db, "categories"), snapshot => {
         todasLasCategorias = [];
         snapshot.forEach(docSnap => {
@@ -156,18 +145,15 @@
         });
         renderizarFiltros();
     });
-
     onSnapshot(collection(db, "subcategories"), snapshot => {
         todasLasSubcategorias = snapshot.docs.map(d => d.data());
         renderizarFiltros();
     });
-
     onSnapshot(collection(db, "products"), snapshot => {
         todosLosProductos = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
         todosLosProductos.sort((a, b) => (b.creado || 0) - (a.creado || 0));
         renderizarProductos();
     });
-
     function renderizarFiltros() {
         if (!categoriaSeleccionada) {
             let html = `<button class="badge-btn active" data-cat="">Todos</button>`;
@@ -188,11 +174,9 @@
             contenedorFiltros.innerHTML = html;
         }
     }
-
     contenedorFiltros.addEventListener("click", e => {
         const btn = e.target.closest(".badge-btn");
         if (!btn) return;
-
         if (btn.dataset.volver === "true") {
             categoriaSeleccionada = "";
             subcategoriaSeleccionada = "";
@@ -201,7 +185,6 @@
             renderizarProductos();
             return;
         }
-
         if (btn.dataset.cat !== undefined) {
             categoriaSeleccionada = btn.dataset.cat;
             subcategoriaSeleccionada = "";
@@ -217,7 +200,6 @@
             renderizarProductos();
         }
     });
-
     function renderizarProductos() {
         let filtrados = todosLosProductos;
         if (categoriaSeleccionada) {
@@ -226,15 +208,13 @@
         if (subcategoriaSeleccionada) {
             filtrados = filtrados.filter(p => p.subcategoria === subcategoriaSeleccionada);
         }
-
         if (filtrados.length === 0) {
             listaProductos.innerHTML = `<p class="mut" style="grid-column: 1 / -1; text-align: center; padding: 20px;">No hay productos disponibles.</p>`;
             return;
         }
-
         let html = "";
         filtrados.forEach(p => {
-            const mensajeWp = encodeURIComponent(`Hola, estoy interesado en el producto: ${p.nombre} (Precio: ₡${p.precio})`);
+            const mensajeWp = encodeURIComponent(`Hola, estoy interesado en el producto: ${p.nombre} (Precio: ₡${p.precio})\nDescripción: ${p.descripcion}`);
             const imagenUrl = (p.imagen && p.imagen.trim() !== "") ? p.imagen : "logo.jpeg";
             html += `
                 <div class="product-card">
