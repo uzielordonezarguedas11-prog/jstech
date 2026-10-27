@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Filtros y Categorías dentro de la Tienda */
         .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
         .badge-btn {
             padding: 5px 12px; font-size: 12px; font-weight: 700; border-radius: 999px;
@@ -18,7 +17,6 @@
         }
         .badge-btn.active { background: #0f766e; color: #fff; border-color: #0f766e; }
         .badge-btn.back-btn { background: #f1f5f9; color: #0f1f2e; border-color: #cbd5e1; }
-        /* Cuadrícula de Productos: 2 columnas en celulares */
         .products-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -42,7 +40,6 @@
             box-shadow: 0 4px 6px -2px rgba(15, 31, 46, .04);
             overflow: hidden;
         }
-        /* Contenedor exacto para que la imagen no se salga ni se deforme */
         .product-img-container {
             width: 100%;
             height: 120px;
@@ -91,7 +88,6 @@
             <h2 style="margin: 2px 0 0; font-size: 16px;">Nuestros Productos</h2>
             <p class="mut" style="font-size: 11px; margin: 2px 0 8px;">Contáctanos al +506 8638 9553 para compras rápidas.</p>
             
-            <!-- Aquí aparecen las categorías y subcategorías dentro del catálogo -->
             <div id="contenedorFiltros" class="filter-row">
                 <button class="badge-btn active" data-cat="">Cargando categorías...</button>
             </div>
@@ -134,9 +130,11 @@
     const contenedorFiltros = document.getElementById("contenedorFiltros");
     const listaProductos = document.getElementById("listaProductosCliente");
     const lblCatSeleccionada = document.getElementById("lblCatSeleccionada");
+
     function escapar(v) {
         return String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
+
     onSnapshot(collection(db, "categories"), snapshot => {
         todasLasCategorias = [];
         snapshot.forEach(docSnap => {
@@ -145,15 +143,22 @@
         });
         renderizarFiltros();
     });
+
     onSnapshot(collection(db, "subcategories"), snapshot => {
         todasLasSubcategorias = snapshot.docs.map(d => d.data());
         renderizarFiltros();
     });
+
     onSnapshot(collection(db, "products"), snapshot => {
-        todosLosProductos = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        // Filtramos para que solo cargue los productos que NO estén ocultos en la tienda pública
+        todosLosProductos = snapshot.docs
+            .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
+            .filter(p => p.oculto !== true);
+            
         todosLosProductos.sort((a, b) => (b.creado || 0) - (a.creado || 0));
         renderizarProductos();
     });
+
     function renderizarFiltros() {
         if (!categoriaSeleccionada) {
             let html = `<button class="badge-btn active" data-cat="">Todos</button>`;
@@ -174,6 +179,7 @@
             contenedorFiltros.innerHTML = html;
         }
     }
+
     contenedorFiltros.addEventListener("click", e => {
         const btn = e.target.closest(".badge-btn");
         if (!btn) return;
@@ -200,6 +206,7 @@
             renderizarProductos();
         }
     });
+
     function renderizarProductos() {
         let filtrados = todosLosProductos;
         if (categoriaSeleccionada) {
