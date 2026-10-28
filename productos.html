@@ -50,11 +50,33 @@
             justify-content: center;
             margin-bottom: 8px;
             overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+        .product-img-container::after {
+            content: "🔍";
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .product-img-container:hover::after {
+            opacity: 1;
         }
         .product-img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            transition: transform 0.2s ease;
+        }
+        .product-img-container:hover .product-img {
+            transform: scale(1.05);
         }
         .product-title { font-size: 0.85rem; font-weight: 800; color: #0f1f2e; margin-bottom: 2px; line-height: 1.2; }
         .product-price { font-size: 0.95rem; font-weight: 800; color: #0f5e5a; margin-bottom: 4px; }
@@ -63,6 +85,55 @@
             width: 100%; padding: 7px 8px; font-size: 0.75rem; font-weight: 700; color: #ffffff;
             background: linear-gradient(135deg, #14a38f, #0f766e); border: none; border-radius: 6px;
             text-align: center; text-decoration: none; display: inline-block; box-sizing: border-box;
+        }
+
+        /* Estilos para el visor de imagen en grande (Modal) */
+        #modalImagen {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            backdrop-filter: blur(4px);
+        }
+        #modalImagen.activo {
+            display: flex;
+        }
+        #modalImagen img {
+            max-width: 90%;
+            max-height: 85vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #fff;
+        }
+        .cerrar-modal {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            color: #fff;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            background: rgba(0,0,0,0.4);
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: background 0.2s;
+        }
+        .cerrar-modal:hover {
+            background: rgba(255,255,255,0.2);
         }
     </style>
 </head>
@@ -108,6 +179,13 @@
         </div>
     </footer>
 </div>
+
+<!-- Modal para ver la imagen en grande -->
+<div id="modalImagen">
+    <span class="cerrar-modal">&times;</span>
+    <img id="imagenAmpliada" src="" alt="Imagen Ampliada">
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { initializeFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -131,6 +209,11 @@
     const listaProductos = document.getElementById("listaProductosCliente");
     const lblCatSeleccionada = document.getElementById("lblCatSeleccionada");
 
+    // Elementos del Modal
+    const modalImagen = document.getElementById("modalImagen");
+    const imagenAmpliada = document.getElementById("imagenAmpliada");
+    const cerrarModalBtn = document.querySelector(".cerrar-modal");
+
     function escapar(v) {
         return String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
@@ -150,7 +233,6 @@
     });
 
     onSnapshot(collection(db, "products"), snapshot => {
-        // Filtramos para que solo cargue los productos que NO estén ocultos en la tienda pública
         todosLosProductos = snapshot.docs
             .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
             .filter(p => p.oculto !== true);
@@ -226,12 +308,12 @@
             html += `
                 <div class="product-card">
                     <div>
-                        <div class="product-img-container">
+                        <div class="product-img-container" onclick="abrirModal('${escapar(imagenUrl)}')">
                             <img src="${escapar(imagenUrl)}" alt="Foto" class="product-img" onerror="this.src='logo.jpeg'">
                         </div>
                         <div style="display:flex; gap:3px; flex-wrap:wrap; margin-bottom:3px;">
                             ${p.categoria ? `<span style="font-size:8px; font-weight:700; background:rgba(15,157,138,0.1); color:#0f9d8a; padding:1px 5px; border-radius:3px;">${escapar(p.categoria)}</span>` : ''}
-                            ${p.subcategoria ? `<span style="font-size:8px; font-weight:700; background:#dcfce7; color:#166534; padding:1px 5px; border-radius:3px;">${escapar(p.subcategoria)}</span>` : ''}
+                            ${p.subcategoria ? `<span style="font-size:8px; font-weight:700; background:#dcfce7; color:#166534; padding:1px 5px; border-radius:4px;">${escapar(p.subcategoria)}</span>` : ''}
                         </div>
                         <div class="product-title">${escapar(p.nombre)}</div>
                         <div class="product-price">₡${escapar(p.precio)}</div>
@@ -245,6 +327,24 @@
         });
         listaProductos.innerHTML = html;
     }
+
+    // Funciones globales para abrir y cerrar el modal de imagen
+    window.abrirModal = function(url) {
+        imagenAmpliada.src = url;
+        modalImagen.classList.add("activo");
+    }
+
+    function cerrarModal() {
+        modalImagen.classList.remove("activo");
+        imagenAmpliada.src = "";
+    }
+
+    cerrarModalBtn.addEventListener("click", cerrarModal);
+    modalImagen.addEventListener("click", (e) => {
+        if (e.target === modalImagen) {
+            cerrarModal();
+        }
+    });
 </script>
 </body>
 </html>
