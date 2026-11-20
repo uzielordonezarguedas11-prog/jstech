@@ -144,7 +144,7 @@
     const db = initializeFirestore(app, { experimentalForceLongPolling: true });
     
     document.getElementById("yr").textContent = new Date().getFullYear();
-    function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&", "<": "<", ">": ">", '"': """, "'": "'" }[c])); }
+    function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&", "<": "<", ">": ">", '"': """ }[c])); }
     function fmt(t) {
         const fecha = Number(t);
         if (!Number.isFinite(fecha) || fecha <= 0) return "Fecha no disponible";
