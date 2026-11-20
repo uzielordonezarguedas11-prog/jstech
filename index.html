@@ -144,7 +144,7 @@
     const db = initializeFirestore(app, { experimentalForceLongPolling: true });
     
     document.getElementById("yr").textContent = new Date().getFullYear();
-   function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+    function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&", "<": "<", ">": ">", '"': """ }[c])); }
     function fmt(t) {
         const fecha = Number(t);
         if (!Number.isFinite(fecha) || fecha <= 0) return "Fecha no disponible";
@@ -176,9 +176,25 @@
             </section>
         `;
     }
+    function formatearProcedimiento(proc) {
+        const limpio = String(proc ?? "").trim();
+        if (!limpio) return "";
+        return /^procedimiento\s*:/i.test(limpio) ? limpio : `Procedimiento: ${limpio}`;
+    }
     function detalle(reparacion) {
         const historial = Array.isArray(reparacion.historial) ? reparacion.historial : [];
-        const historialHTML = historial.length ? historial.slice().reverse().map(h => `<div>${esc(h.estado)} ${h.nota ? `— ${esc(h.nota)}` : ""} <small>${esc(fmt(h.fecha))}</small></div>`).join("") : "<p class='mut'>Sin actualizaciones registradas.</p>";
+        const historialHTML = historial.length
+            ? historial.slice().reverse().map(h => {
+                const procTexto = formatearProcedimiento(h.procedimiento);
+                return `
+                    <div>
+                        ${esc(h.estado)} ${h.nota ? `— ${esc(h.nota)}` : ""}
+                        ${procTexto ? `<div>${esc(procTexto)}</div>` : ""}
+                        <small>${esc(fmt(h.fecha))}</small>
+                    </div>
+                `;
+            }).join("")
+            : "<p class='mut'>Sin actualizaciones registradas.</p>";
         return `
             <div class="dh">
                 <div>
