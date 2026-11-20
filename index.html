@@ -130,7 +130,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { initializeFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    
+
     const firebaseConfig = {
         apiKey: "AIzaSyBHdtd1YLq8z_cuVgUDx33Z088okq0Sriw",
         authDomain: "servicio-tecnico-1d91f.firebaseapp.com",
@@ -142,7 +142,7 @@
     const ESTADOS = ["Recibido", "En diagnóstico", "Esperando repuesto", "En reparación", "Listo para entrega", "Entregado"];
     const app = initializeApp(firebaseConfig);
     const db = initializeFirestore(app, { experimentalForceLongPolling: true });
-    
+
     document.getElementById("yr").textContent = new Date().getFullYear();
     function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&", "<": "<", ">": ">", '"': """ }[c])); }
     function fmt(t) {
@@ -159,7 +159,7 @@
         return `<div class="steps">${ESTADOS.map((s, k) => `<div class="step ${i >= 0 && k <= i ? "d" : ""}"><i></i>${esc(s)}</div>`).join("")}</div>`;
     }
     function galeriaCliente(fotos = []) {
-        if (!Array.isArray(fotos) || fotos.length === 0) return '';
+        if (!Array.isArray(fotos) || fotos.length === 0) return "";
         return `
             <section style="margin-top: 20px;">
                 <h3>📸 Fotografías de la reparación</h3>
